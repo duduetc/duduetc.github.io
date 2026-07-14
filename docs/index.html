@@ -424,7 +424,7 @@
 </style>
 </head>
 <body>
-<div class="demo-banner">⚡ Modo demonstração · dados fictícios para apresentação</div>
+<!-- <div class="demo-banner">⚡ Modo demonstração · dados fictícios para apresentação</div> -->
 <div class="wrap">
 
   <div class="hero">
@@ -446,7 +446,7 @@
   <div id="result"></div>
 
   <div class="empty-state" id="emptyState">
-    <div class="big">Ainda não escolhi</div>
+    <!--<div class="big">Ainda não escolhi</div>-->
     <p>Assim que você digitar e escolher seu nome, seus horários aparecem aqui — só nos blocos em que você está escalado.</p>
   </div>
 
@@ -575,10 +575,13 @@ function selectPerson(person){
   renderResult(person);
 }
 
-// Modo demonstração: já abre com um exemplo preenchido
+// A página começa sem um nome selecionado
 (function autoSelectDemoPerson(){
-  var demo = PEOPLE.find(p => p.name === 'Bia Calazans') || PEOPLE[0];
-  if(demo) selectPerson(demo);
+  nameInput.value = '';
+  clearBtn.classList.remove('show');
+  suggestionsEl.classList.remove('show');
+  resultEl.classList.remove('show');
+  emptyStateEl.style.display = 'block';
 })();
 
 function renderResult(person){
