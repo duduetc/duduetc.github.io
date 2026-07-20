@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JUMP 2026 — Importar escala</title>
+<style>
+  :root{
+    --bg: #14112b; --surface: #201b42; --surface-2: #2a2350;
+    --line-strong: rgba(246,241,234,0.20);
+    --text: #f6f1ea; --text-dim: #b7aede; --text-faint: #8479ac;
+    --accent: #ff6a3d; --accent-2: #ffc857;
+    --ok: #59d9a6; --err: #ff6a6a;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0; min-height:100vh;
+    background:var(--bg); color:var(--text);
+    font-family:'Inter',system-ui,sans-serif;
+    display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .card{
+    width:100%; max-width:420px;
+    background:var(--surface);
+    border:1px solid var(--line-strong);
+    border-radius:18px;
+    padding:28px 24px;
+  }
+  h1{ font-size:20px; margin:0 0 6px; }
+  p.sub{ color:var(--text-faint); font-size:13.5px; margin:0 0 22px; line-height:1.5; }
+  label{ display:block; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--text-faint); margin-bottom:6px; }
+  input[type=password], input[type=file]{
+    width:100%; background:var(--surface-2); border:1px solid var(--line-strong);
+    border-radius:10px; padding:11px 12px; color:var(--text); font-size:14px; margin-bottom:16px;
+  }
+  button{
+    width:100%; padding:12px; border:none; border-radius:10px;
+    background:var(--accent); color:#1b1332; font-weight:700; font-size:14px; cursor:pointer;
+  }
+  button:disabled{ opacity:.5; cursor:default; }
+  .msg{ margin-top:14px; font-size:13.5px; line-height:1.5; }
+  .msg.ok{ color:var(--ok); }
+  .msg.err{ color:var(--err); }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>Importar escala</h1>
+    <p class="sub">Sobe a planilha "Escala Individualizada dos Voluntários" (.xlsx) e substitui a escala publicada para todo mundo.</p>
+    <form id="importForm">
+      <label for="password">Senha</label>
+      <input type="password" id="password" required autocomplete="current-password">
+      <label for="file">Planilha (.xlsx)</label>
+      <input type="file" id="file" accept=".xlsx" required>
+      <button type="submit" id="submitBtn">Importar</button>
+    </form>
+    <div class="msg" id="msg"></div>
+  </div>
+
+<script>
+const form = document.getElementById('importForm');
+const submitBtn = document.getElementById('submitBtn');
+const msgEl = document.getElementById('msg');
+
+function readFileAsBase64(file){
+  return new Promise((resolve, reject)=>{
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result).split(',')[1]);
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+form.addEventListener('submit', async (e)=>{
+  e.preventDefault();
+  const password = document.getElementById('password').value;
+  const file = document.getElementById('file').files[0];
+  if(!file) return;
+
+  submitBtn.disabled = true;
+  submitBtn.textContent = 'Importando...';
+  msgEl.textContent = '';
+  msgEl.className = 'msg';
+
+  try{
+    const fileBase64 = await readFileAsBase64(file);
+    const res = await fetch('/api/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password, fileBase64 }),
+    });
+    const data = await res.json();
+    if(!res.ok){
+      throw new Error(data.error || 'Falha ao importar');
+    }
+    msgEl.textContent = `Importado com sucesso: ${data.people} pessoas, ${data.blocks} blocos de escala.`;
+    msgEl.className = 'msg ok';
+    form.reset();
+  }catch(err){
+    msgEl.textContent = err.message || 'Erro ao importar a planilha.';
+    msgEl.className = 'msg err';
+  }finally{
+    submitBtn.disabled = false;
+    submitBtn.textContent = 'Importar';
+  }
+});
+</script>
+</body>
+</html>
